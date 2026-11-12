@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07090c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <title>Semáforo Inteligente · Cursor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #07090c;
+      --ink: #e8eef2;
+      --dim: #93a3ae;
+      --mute: #667480;
+      --line: rgba(232, 238, 242, 0.12);
+      --cyan: #2ee6c7;
+      --cyan-dim: rgba(46, 230, 199, 0.55);
+      --stop: #ff2d3a;
+      --amber: #ffbf1a;
+      --go: #17d36c;
+      --tint: rgba(23, 211, 108, 0.2);
+      --pad-x: max(18px, env(safe-area-inset-left));
+    }
+
+    @property --tint {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: rgba(23, 211, 108, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { color-scheme: dark; }
+
+    body {
+      min-height: 100%;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: --tint 0.45s linear;
+    }
+
+    body[data-fase="VERDE"] { --tint: rgba(23, 211, 108, 0.22); }
+    body[data-fase="AMARELO"] { --tint: rgba(255, 191, 26, 0.18); }
+    body[data-fase="VERMELHO"] { --tint: rgba(255, 45, 58, 0.18); }
+
+    ::selection { background: rgba(46, 230, 199, 0.28); color: #fff; }
+
+    button { font: inherit; color: inherit; }
+
+    :focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 3px;
+    }
+
+    /* Atmosphere — one slow grid drift */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: var(--bg);
+    }
+
+    .wash {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 38% at 8% -8%, rgba(46, 230, 199, 0.14), transparent 58%),
+        radial-gradient(ellipse 42% 36% at 100% 100%, rgba(16, 48, 56, 0.45), transparent 62%),
+        linear-gradient(180deg, #0c1218 0%, #07090c 46%, #05070a 100%);
+    }
+
+    .grid {
+      position: absolute;
+      inset: -64px;
+      background-image:
+        linear-gradient(to right, rgba(46, 230, 199, 0.055) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(46, 230, 199, 0.055) 1px, transparent 1px);
+      background-size: 56px 56px;
+      animation: drift 36s linear infinite;
+      -webkit-mask-image: radial-gradient(ellipse at 50% 32%, #000 18%, transparent 74%);
+      mask-image: radial-gradient(ellipse at 50% 32%, #000 18%, transparent 74%);
+    }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.14;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, transparent 42%, rgba(0, 0, 0, 0.46) 100%);
+    }
+
+    @keyframes drift {
+      to { background-position: 0 56px; }
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding-left: var(--pad-x);
+      padding-right: max(18px, env(safe-area-inset-right));
+    }
+
+    /* First viewport */
+    .hero {
+      height: 100vh;
+      height: 100svh;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto minmax(140px, 1fr) auto auto;
+      grid-template-areas:
+        "top"
+        "brand"
+        "scene"
+        "hud"
+        "cta";
+      gap: 10px 28px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+
+    .top { grid-area: top; }
+    .brand { grid-area: brand; container-type: inline-size; }
+    .scene { grid-area: scene; }
+    .hud { grid-area: hud; }
+    .cta { grid-area: cta; }
+
+    .top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: "badge course run";
+      align-items: center;
+      gap: 10px 14px;
+    }
+
+    .badge {
+      grid-area: badge;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      justify-self: start;
+      font-family: "Syne", sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--ink);
+      border: 1px solid var(--cyan-dim);
+      border-radius: 2px;
+      padding: 5px 8px 5px 6px;
+    }
+
+    .badge i,
+    .run i {
+      width: 6px;
+      height: 6px;
+      background: var(--cyan);
+      display: block;
+      flex: none;
+    }
+
+    .course {
+      grid-area: course;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .run {
+      grid-area: run;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-self: end;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.64rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      white-space: nowrap;
+    }
+
+    h1 {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 8vw, 4.15rem);
+      line-height: 0.88;
+      letter-spacing: -0.055em;
+      max-width: 100%;
+    }
+
+    @supports (font-size: 1cqi) {
+      h1 { font-size: clamp(2rem, 11.4cqi, 4.35rem); }
+    }
+
+    h1 span { color: var(--cyan); }
+
+    .lede {
+      margin-top: 10px;
+      max-width: 36ch;
+      color: var(--dim);
+      font-size: clamp(0.92rem, 2.4vw, 1.05rem);
+      line-height: 1.45;
+      text-wrap: pretty;
+    }
+
+    /* Open instrument field — not a card */
+    .scene {
+      position: relative;
+      min-height: 0;
+      height: 100%;
+      container-type: size;
+      overflow: hidden;
+    }
+
+    .bracket {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 0 solid rgba(46, 230, 199, 0.72);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .bracket.tl { top: 2px; left: 2px; border-top-width: 1.5px; border-left-width: 1.5px; }
+    .bracket.tr { top: 2px; right: 2px; border-top-width: 1.5px; border-right-width: 1.5px; }
+    .bracket.bl { bottom: 2px; left: 2px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+    .bracket.br { bottom: 2px; right: 2px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+    .stage-core {
+      position: absolute;
+      inset: 18px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .halo {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      width: min(280px, 70cqw);
+      height: min(280px, 56cqh);
+      transform: translate(-50%, -58%);
+      background: radial-gradient(circle, var(--tint), transparent 68%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .signal {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .housing {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(7px, 1.6cqh, 12px);
+      width: max-content;
+      padding: clamp(12px, 2cqh, 18px) clamp(12px, 2cqw, 16px) clamp(8px, 1.4cqh, 12px);
+      border-radius: 16px;
+      border: 1px solid rgba(186, 208, 216, 0.18);
+      background-image:
+        radial-gradient(circle at 9px 9px, #9aafb8 1px, #5c6e78 1.5px, transparent 2px),
+        radial-gradient(circle at calc(100% - 9px) 9px, #9aafb8 1px, #5c6e78 1.5px, transparent 2px),
+        radial-gradient(circle at 9px calc(100% - 9px), #9aafb8 1px, #5c6e78 1.5px, transparent 2px),
+        radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #9aafb8 1px, #5c6e78 1.5px, transparent 2px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
+        linear-gradient(90deg, #24303a 0%, #151c23 46%, #10161c 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 16px 36px rgba(0, 0, 0, 0.38);
+    }
+
+    .housing::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      background: linear-gradient(var(--cyan), rgba(46, 230, 199, 0.05));
+    }
+
+    .plate {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      color: rgba(232, 238, 242, 0.46);
+      line-height: 1;
+    }
+
+    .lamp {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      flex: none;
+      background: radial-gradient(circle at 50% 42%, #1a232c, #07090c 72%);
+      box-shadow:
+        inset 0 0 0 3px #0b0f13,
+        inset 0 10px 14px rgba(0, 0, 0, 0.55);
+    }
+
+    @supports (width: 1cqh) {
+      .lamp {
+        width: clamp(32px, 16cqh, 86px);
+        height: clamp(32px, 16cqh, 86px);
+      }
+    }
+
+    #lampRed {
+      box-shadow:
+        inset 0 0 0 3px #0b0f13,
+        inset 0 0 0 4px rgba(255, 45, 58, 0.28),
+        inset 0 10px 14px rgba(0, 0, 0, 0.5);
+    }
+
+    #lampYellow {
+      box-shadow:
+        inset 0 0 0 3px #0b0f13,
+        inset 0 0 0 4px rgba(255, 191, 26, 0.28),
+        inset 0 10px 14px rgba(0, 0, 0, 0.5);
+    }
+
+    #lampGreen {
+      box-shadow:
+        inset 0 0 0 3px #0b0f13,
+        inset 0 0 0 4px rgba(23, 211, 108, 0.28),
+        inset 0 10px 14px rgba(0, 0, 0, 0.5);
+    }
+
+    .lamp.on { animation: ignite 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    .lamp.on::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      top: 14%;
+      width: 32%;
+      height: 16%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    #lampRed.on {
+      background: radial-gradient(circle at 38% 32%, #ffe5e8 0%, #ff6a74 16%, #ff2d3a 48%, #a10e1a 82%);
+      box-shadow:
+        inset 0 -7px 10px rgba(0, 0, 0, 0.28),
+        0 0 18px rgba(255, 45, 58, 0.42);
+    }
+
+    #lampYellow.on {
+      background: radial-gradient(circle at 38% 32%, #fff4cc 0%, #ffd35a 16%, #ffbf1a 48%, #b48400 82%);
+      box-shadow:
+        inset 0 -7px 10px rgba(0, 0, 0, 0.25),
+        0 0 18px rgba(255, 191, 26, 0.38);
+    }
+
+    #lampGreen.on {
+      background: radial-gradient(circle at 38% 32%, #e5ffe9 0%, #5aee8e 16%, #17d36c 48%, #0b8a42 82%);
+      box-shadow:
+        inset 0 -7px 10px rgba(0, 0, 0, 0.25),
+        0 0 18px rgba(23, 211, 108, 0.38);
+    }
+
+    @keyframes ignite {
+      from { transform: scale(0.9); }
+      to { transform: scale(1); }
+    }
+
+    .stand {
+      position: relative;
+      width: 78px;
+      height: clamp(22px, 8cqh, 58px);
+      display: grid;
+      place-items: center;
+    }
+
+    .pole {
+      width: 7px;
+      height: 100%;
+      background: linear-gradient(90deg, #3c4852, #141b22 48%, #0c1116);
+    }
+
+    .stand::after {
+      content: "";
+      position: absolute;
+      left: calc(50% + 12px);
+      top: 2px;
+      bottom: 2px;
+      width: 8px;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(46, 230, 199, 0.8) 0 1px,
+        transparent 1px 7px
+      );
+    }
+
+    .base {
+      width: 68px;
+      height: 7px;
+      background: linear-gradient(180deg, #2a343d, #12181e);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .crossing {
+      position: relative;
+      width: min(94%, 460px);
+      margin-top: 1px;
+      z-index: 1;
+    }
+
+    .stripes {
+      height: clamp(16px, 4.2cqh, 26px);
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(232, 238, 242, 0.34) 0 11px,
+        transparent 11px 24px
+      );
+      border-top: 1px solid rgba(46, 230, 199, 0.6);
+    }
+
+    .walker {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 100%;
+      height: 28px;
+      pointer-events: none;
+    }
+
+    .fig {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      opacity: 0;
+    }
+
+    .walker.on .fig {
+      opacity: 1;
+      animation: cross 12s linear forwards;
+    }
+
+    .head,
+    .torso { display: block; }
+
+    .head {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin: 0 auto 2px;
+      background: var(--ink);
+    }
+
+    .torso {
+      width: 12px;
+      height: 15px;
+      background: var(--cyan);
+      clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+    }
+
+    @keyframes cross {
+      from { left: 0; }
+      to { left: calc(100% - 12px); }
+    }
+
+    /* Countdown sits in the corner, clear of the lamp stack */
+    .ring-wrap {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 48px;
+      height: 48px;
+      z-index: 5;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ring-wrap.show { opacity: 1; }
+
+    .ring-wrap svg {
+      width: 48px;
+      height: 48px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: rgba(232, 238, 242, 0.16);
+      stroke-width: 3;
+    }
+
+    .ring-prog {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 3;
+      stroke-linecap: butt;
+      transition: stroke-dashoffset 0.08s linear;
+    }
+
+    .ring-num {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.84rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+
+    /* HUD rail — below the scene */
+    .hud {
+      border-top: 1px solid rgba(46, 230, 199, 0.4);
+      padding-top: 8px;
+      min-width: 0;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .chip { min-width: 0; }
+
+    .chip + .chip {
+      border-left: 1px solid var(--line);
+      padding-left: 10px;
+    }
+
+    .k {
+      display: block;
+      margin-bottom: 3px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+
+    .chip strong {
+      display: block;
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      font-size: clamp(1rem, 2.8vw, 1.4rem);
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meter {
+      margin-top: 8px;
+      height: 2px;
+      background: rgba(232, 238, 242, 0.1);
+    }
+
+    #meterBar {
+      display: block;
+      height: 100%;
+      width: 100%;
+      transform: scaleX(0);
+      transform-origin: left center;
+      background: var(--go);
+    }
+
+    body[data-fase="VERDE"] #meterBar { background: var(--go); }
+    body[data-fase="AMARELO"] #meterBar { background: var(--amber); }
+    body[data-fase="VERMELHO"] #meterBar { background: var(--stop); }
+
+    /* Botoeira */
+    .btn-main {
+      position: relative;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 76px;
+      padding: 12px 14px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      text-align: left;
+      cursor: pointer;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn-main::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.28);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .btn-main.rippling::after { animation: flash 0.32s ease; }
+
+    @keyframes flash {
+      from { opacity: 0.35; }
+      to { opacity: 0; }
+    }
+
+    .btn-slot {
+      align-self: stretch;
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .btn-kicker {
+      display: block;
+      margin-bottom: 3px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+
+    .btn-title {
+      display: block;
+      font-family: "Syne", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.2rem, 3.4vw, 1.65rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .btn-note {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      line-height: 1.3;
+      opacity: 0.88;
+    }
+
+    .btn-code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.14em;
+      align-self: start;
+      margin-top: 2px;
+      opacity: 0.78;
+    }
+
+    .btn-main.perm-red {
+      background: var(--stop);
+      color: #fff8f8;
+      border-color: #d01220;
+    }
+
+    .btn-main.perm-yellow {
+      background: var(--amber);
+      color: #1c1400;
+      border-color: #d9a000;
+    }
+
+    .btn-main.perm-green,
+    .btn-main.ack {
+      background: var(--go);
+      color: #04150c;
+      border-color: #0ea854;
+    }
+
+    .btn-main:disabled {
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .btn-main:not(:disabled):hover { filter: brightness(1.05); }
+
+    .btn-main:not(:disabled):active { transform: translateY(1px); }
+
+    .tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin-top: 6px;
+    }
+
+    .tools button {
+      background: none;
+      border: 0;
+      padding: 6px 0;
+      min-height: 36px;
+      cursor: pointer;
+      color: var(--dim);
+      font-size: 0.8rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(46, 230, 199, 0.4);
+      touch-action: manipulation;
+    }
+
+    .tools button:hover { color: var(--ink); }
+
+    /* Below the fold */
+    .spec {
+      padding: 28px 0 8px;
+      border-top: 1px solid rgba(46, 230, 199, 0.28);
+    }
+
+    .spec-kicker {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.64rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .spec h2 {
+      font-family: "Syne", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.35rem, 3vw, 1.8rem);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .spec-lede {
+      margin-top: 8px;
+      max-width: 52ch;
+      color: var(--dim);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .times {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px 12px;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .times dt {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--mute);
+      margin-bottom: 4px;
+    }
+
+    .times dd {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
+      letter-spacing: -0.05em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rules {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .rule {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: var(--dim);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .rule b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .sw {
+      width: 10px;
+      height: 10px;
+      margin-top: 5px;
+    }
+
+    .sw.r { background: var(--stop); }
+    .sw.y { background: var(--amber); }
+    .sw.g { background: var(--go); }
+
+    footer {
+      padding: 22px 0 max(28px, env(safe-area-inset-bottom));
+      color: var(--mute);
+      font-size: 0.75rem;
+      line-height: 1.55;
+    }
+
+    footer .names {
+      color: var(--dim);
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 720px) {
+      .top {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+          "badge run"
+          "course course";
+        gap: 6px 10px;
+      }
+
+      .course { white-space: normal; }
+
+      .btn-code { display: none; }
+
+      .btn-main { grid-template-columns: 12px minmax(0, 1fr); }
+    }
+
+    @media (max-width: 380px) {
+      .sub { display: none; }
+      .btn-note { font-size: 0.72rem; }
+    }
+
+    @media (min-width: 720px) {
+      .times { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (min-width: 960px) {
+      .hero {
+        grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+        grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+        grid-template-areas:
+          "top top"
+          "brand scene"
+          "cta scene"
+          "hud hud";
+        align-items: stretch;
+        gap: 0 48px;
+        row-gap: 12px;
+        padding-top: max(22px, env(safe-area-inset-top));
+      }
+
+      .brand { align-self: end; padding-bottom: 16px; }
+      .cta { align-self: start; padding-top: 4px; }
+
+      .rules { grid-template-columns: 1fr 1fr; gap: 12px 28px; }
+
+      .ring-wrap { top: 18px; left: 18px; width: 52px; height: 52px; }
+      .ring-wrap svg { width: 52px; height: 52px; }
+    }
+
+    @media (max-height: 740px) {
+      .lede { margin-top: 6px; }
+      .hero { gap: 8px 20px; }
+      .btn-main { min-height: 64px; padding-top: 10px; padding-bottom: 10px; }
+      .tools { margin-top: 2px; }
+      .tools button { min-height: 32px; }
+      .sub { display: none; }
+    }
+
+    @media (max-height: 640px) and (max-width: 520px) {
+      .stage-core { inset: 6px 4px 4px; }
+      .housing { gap: 4px; padding: 8px 10px 6px; }
+      .stand { height: 12px; }
+      .stripes { height: 12px; }
+      .base { height: 6px; }
+      .lamp { width: 26px; height: 26px; }
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        grid-template-areas:
+          "top top"
+          "brand scene"
+          "cta scene"
+          "hud hud";
+        gap: 6px 16px;
+      }
+
+      h1 { font-size: 1.85rem; }
+      .lede { font-size: 0.8rem; margin-top: 4px; }
+      .brand { align-self: end; }
+      .cta { align-self: start; }
+      .btn-note { display: none; }
+      .crossing { width: min(92%, 240px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grid,
+      .lamp.on,
+      .walker.on .fig,
+      .btn-main.rippling::after {
+        animation: none !important;
+      }
+
+      .walker.on .fig {
+        opacity: 1;
+        left: calc(50% - 6px);
+      }
+
+      body { transition: none; }
+    }
+  </style>
+</head>
+<body data-fase="VERDE">
+  <div class="atmosphere" aria-hidden="true">
+    <div class="wash"></div>
+    <div class="grid"></div>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+  </div>
+
+  <div class="wrap">
+    <main class="hero">
+      <header class="top">
+        <p class="badge"><i aria-hidden="true"></i>Cursor</p>
+        <p class="course">Sistemas Digitais · ENGCO241N01</p>
+        <p class="run"><i aria-hidden="true"></i>Em ciclo</p>
+      </header>
+
+      <div class="brand">
+        <h1>Semáforo<br><span>inteligente</span></h1>
+        <p class="lede">Peça a travessia no verde. A via cede em três segundos.</p>
+      </div>
+
+      <section class="scene" aria-label="Simulação">
+        <span class="bracket tl" aria-hidden="true"></span>
+        <span class="bracket tr" aria-hidden="true"></span>
+        <span class="bracket bl" aria-hidden="true"></span>
+        <span class="bracket br" aria-hidden="true"></span>
+
+        <div class="stage-core">
+          <div class="halo" aria-hidden="true"></div>
+          <div class="signal">
+            <div class="housing" aria-label="Semáforo veicular">
+              <div class="plate">SI-N01</div>
+              <div id="lampRed" class="lamp" title="Vermelho"></div>
+              <div id="lampYellow" class="lamp" title="Amarelo"></div>
+              <div id="lampGreen" class="lamp on on-green" title="Verde"></div>
+              <div class="plate">VEIC</div>
+            </div>
+            <div class="stand" aria-hidden="true"><div class="pole"></div></div>
+            <div class="base" aria-hidden="true"></div>
+          </div>
+
+          <div class="crossing">
+            <div class="stripes" aria-hidden="true"></div>
+            <div class="walker" id="walker" aria-hidden="true">
+              <span class="fig"><i class="head"></i><i class="torso"></i></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ring-wrap" id="ringWrap" aria-hidden="true">
+          <svg viewBox="0 0 54 54">
+            <circle class="ring-track" cx="27" cy="27" r="22"></circle>
+            <circle class="ring-prog" id="ringProg" cx="27" cy="27" r="22"></circle>
+          </svg>
+          <div class="ring-num" id="ringNum">3</div>
+        </div>
+      </section>
+
+      <div class="hud" aria-label="Estado do ciclo">
+        <div class="chips">
+          <div class="chip">
+            <span class="k">Fase</span>
+            <strong id="estado" aria-live="polite">Verde</strong>
+            <span class="sub" id="faseHint">fluxo liberado</span>
+          </div>
+          <div class="chip">
+            <span class="k">Na fase</span>
+            <strong id="tempo">0.0s</strong>
+          </div>
+          <div class="chip">
+            <span class="k">Ciclo</span>
+            <strong id="tAbs">0.0s</strong>
+          </div>
+        </div>
+        <div class="meter" aria-hidden="true"><span id="meterBar"></span></div>
+      </div>
+
+      <div class="cta">
+        <button id="btnPedestre" class="btn-main perm-red" type="button">
+          <span class="btn-slot" aria-hidden="true"></span>
+          <span class="btn-copy">
+            <span class="btn-kicker" id="btnKicker">Botoeira</span>
+            <span class="btn-title" id="btnLabel">Solicitar travessia</span>
+            <span class="btn-note" id="btnHint">Botão vermelho · veículos no verde</span>
+          </span>
+          <span class="btn-code" id="btnCode">LIVRE</span>
+        </button>
+        <div class="tools">
+          <button id="btnReset" type="button">Reiniciar ciclo</button>
+          <button id="btnInfo" type="button">Tempos CONTRAN</button>
+        </div>
+      </div>
+    </main>
+
+    <section class="spec" aria-label="Tempos e permissão">
+      <p class="spec-kicker">Registro de ciclo</p>
+      <h2>Permissão da botoeira</h2>
+      <p class="spec-lede">O botão espelha a fase veicular. O pedido só entra no verde, e uma vez só.</p>
+      <dl class="times">
+        <div><dt>Atraso</dt><dd>3s</dd></div>
+        <div><dt>Amarelo</dt><dd>5s</dd></div>
+        <div><dt>Vermelho</dt><dd>12s</dd></div>
+        <div><dt>Verde máx.</dt><dd>45s</dd></div>
+      </dl>
+      <div class="rules">
+        <div class="rule"><i class="sw r"></i><span><b>Verde</b> sem pedido — botão vermelho, habilitado.</span></div>
+        <div class="rule"><i class="sw g"></i><span><b>Pedido aceito</b> — botão verde, bloqueado. Amarelo em 3 s.</span></div>
+        <div class="rule"><i class="sw y"></i><span><b>Amarelo</b> — botão amarelo, bloqueado.</span></div>
+        <div class="rule"><i class="sw g"></i><span><b>Vermelho</b> — botão verde para atravessar, bloqueado.</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <p class="names">Luiz Felipe · Luigi Espagnoli · Jeremias · Dioermeson Junior · José Ricardo · Rhyatt Kayck · Guilherme Cavalcante</p>
+      <p>Amarelo CONTRAN/MBST: 3–5 s. Verde e vermelho variam por via — tempos didáticos nesta demo.</p>
+    </footer>
+  </div>
+
+  <script>
+    /* Mesmos valores de src/semaforo.py → Tempos() */
+    const TEMPOS = {
+      delayAposPedido: 3,
+      amarelo: 5,
+      vermelho: 12,
+      verdeMax: 45,
+    };
+
+    const CIRC = 2 * Math.PI * 22;
+    const SPEED = 1;
+    const DT = 0.05;
+
+    const COPY = {
+      "perm-red": {
+        kicker: "Botoeira",
+        title: "Solicitar travessia",
+        hint: "Botão vermelho · veículos no verde",
+        code: "LIVRE",
+      },
+      ack: {
+        kicker: "Confirmado",
+        title: "Pedido aceito",
+        code: "ACK",
+      },
+      "perm-yellow": {
+        kicker: "Aguarde",
+        title: "Transição",
+        hint: "Botão amarelo · pedido bloqueado",
+        code: "BLOQ.",
+      },
+      "perm-green": {
+        kicker: "Permissão",
+        title: "Atravessar",
+        hint: "Botão verde · veículos no vermelho",
+        code: "PASSE",
+      },
+    };
+
+    const state = {
+      estado: "VERDE",
+      tempoNoEstado: 0,
+      tAbs: 0,
+      pedidoAceito: false,
+      countdownAmarelo: null,
+    };
+
+    const el = {
+      red: document.getElementById("lampRed"),
+      yellow: document.getElementById("lampYellow"),
+      green: document.getElementById("lampGreen"),
+      estado: document.getElementById("estado"),
+      faseHint: document.getElementById("faseHint"),
+      tempo: document.getElementById("tempo"),
+      tAbs: document.getElementById("tAbs"),
+      btn: document.getElementById("btnPedestre"),
+      btnKicker: document.getElementById("btnKicker"),
+      btnLabel: document.getElementById("btnLabel"),
+      btnHint: document.getElementById("btnHint"),
+      btnCode: document.getElementById("btnCode"),
+      walker: document.getElementById("walker"),
+      ringWrap: document.getElementById("ringWrap"),
+      ringProg: document.getElementById("ringProg"),
+      ringNum: document.getElementById("ringNum"),
+      meter: document.getElementById("meterBar"),
+    };
+
+    const meta = {
+      VERDE: { nome: "Verde", hint: "fluxo liberado" },
+      AMARELO: { nome: "Amarelo", hint: "atenção · transição" },
+      VERMELHO: { nome: "Vermelho", hint: "travessia liberada" },
+    };
+
+    function setCls(node, cls) {
+      if (node.className !== cls) node.className = cls;
+    }
+
+    function atualizarBotao() {
+      let want = "perm-green";
+      if (state.estado === "VERDE") want = state.pedidoAceito ? "ack" : "perm-red";
+      else if (state.estado === "AMARELO") want = "perm-yellow";
+
+      if (el.btn.dataset.perm !== want) {
+        el.btn.dataset.perm = want;
+        el.btn.classList.remove("perm-red", "perm-yellow", "perm-green", "ack");
+        el.btn.classList.add(want);
+        el.btn.disabled = want !== "perm-red";
+        const copy = COPY[want];
+        el.btnKicker.textContent = copy.kicker;
+        el.btnLabel.textContent = copy.title;
+        el.btnCode.textContent = copy.code;
+        if (want !== "ack") el.btnHint.textContent = copy.hint;
+      }
+
+      if (want === "ack") {
+        const rest = state.countdownAmarelo != null
+          ? Math.max(0, state.countdownAmarelo).toFixed(1)
+          : "—";
+        el.btnHint.textContent = "Botão verde · amarelo em " + rest + "s";
+      }
+    }
+
+    function atualizarAnel() {
+      const show = state.estado === "VERDE" && state.pedidoAceito && state.countdownAmarelo != null;
+      el.ringWrap.classList.toggle("show", show);
+      if (!show) return;
+      const p = Math.max(0, Math.min(1, state.countdownAmarelo / TEMPOS.delayAposPedido));
+      el.ringProg.style.strokeDasharray = String(CIRC);
+      el.ringProg.style.strokeDashoffset = String(CIRC * (1 - p));
+      el.ringNum.textContent = String(Math.ceil(Math.max(0, state.countdownAmarelo)));
+    }
+
+    function atualizarMedidor() {
+      let span = TEMPOS.verdeMax;
+      let pos = state.tempoNoEstado;
+      if (state.estado === "VERDE" && state.pedidoAceito) {
+        span = TEMPOS.delayAposPedido;
+        const rest = state.countdownAmarelo == null ? TEMPOS.delayAposPedido : state.countdownAmarelo;
+        pos = TEMPOS.delayAposPedido - rest;
+      } else if (state.estado === "AMARELO") {
+        span = TEMPOS.amarelo;
+      } else if (state.estado === "VERMELHO") {
+        span = TEMPOS.vermelho;
+      }
+      const p = Math.max(0, Math.min(1, pos / span));
+      el.meter.style.transform = "scaleX(" + p + ")";
+    }
+
+    function render() {
+      setCls(el.red, "lamp" + (state.estado === "VERMELHO" ? " on on-red" : ""));
+      setCls(el.yellow, "lamp" + (state.estado === "AMARELO" ? " on on-yellow" : ""));
+      setCls(el.green, "lamp" + (state.estado === "VERDE" ? " on on-green" : ""));
+      el.walker.classList.toggle("on", state.estado === "VERMELHO");
+
+      if (document.body.dataset.fase !== state.estado) {
+        document.body.dataset.fase = state.estado;
+      }
+
+      const m = meta[state.estado];
+      el.estado.textContent = m.nome;
+      el.faseHint.textContent = m.hint;
+      el.tempo.textContent = state.tempoNoEstado.toFixed(1) + "s";
+      el.tAbs.textContent = state.tAbs.toFixed(1) + "s";
+      atualizarBotao();
+      atualizarAnel();
+      atualizarMedidor();
+    }
+
+    function transicionar(dt) {
+      if (state.estado === "VERDE") {
+        if (state.pedidoAceito) {
+          if (state.countdownAmarelo == null) state.countdownAmarelo = TEMPOS.delayAposPedido;
+          state.countdownAmarelo -= dt;
+          if (state.countdownAmarelo <= 0) {
+            state.estado = "AMARELO";
+            state.tempoNoEstado = 0;
+            state.countdownAmarelo = null;
+          }
+        } else if (state.tempoNoEstado >= TEMPOS.verdeMax) {
+          state.estado = "AMARELO";
+          state.tempoNoEstado = 0;
+        }
+      } else if (state.estado === "AMARELO") {
+        if (state.tempoNoEstado >= TEMPOS.amarelo) {
+          state.estado = "VERMELHO";
+          state.tempoNoEstado = 0;
+          state.pedidoAceito = false;
+        }
+      } else if (state.estado === "VERMELHO") {
+        if (state.tempoNoEstado >= TEMPOS.vermelho) {
+          state.estado = "VERDE";
+          state.tempoNoEstado = 0;
+          state.pedidoAceito = false;
+          state.countdownAmarelo = null;
+        }
+      }
+    }
+
+    function passo(dt) {
+      state.tempoNoEstado += dt;
+      state.tAbs += dt;
+      transicionar(dt);
+      render();
+    }
+
+    let last = performance.now();
+    function loop(now) {
+      const elapsed = Math.min(0.1, (now - last) / 1000) * SPEED;
+      last = now;
+      let acc = elapsed;
+      while (acc >= DT) { passo(DT); acc -= DT; }
+      if (acc > 0) passo(acc);
+      requestAnimationFrame(loop);
+    }
+
+    el.btn.addEventListener("pointerdown", () => {
+      if (el.btn.disabled) return;
+      el.btn.classList.remove("rippling");
+      void el.btn.offsetWidth;
+      el.btn.classList.add("rippling");
+    });
+
+    el.btn.addEventListener("click", () => {
+      if (el.btn.disabled) return;
+      if (state.estado !== "VERDE" || state.pedidoAceito) return;
+      state.pedidoAceito = true;
+      state.countdownAmarelo = TEMPOS.delayAposPedido;
+      render();
+    });
+
+    document.getElementById("btnReset").addEventListener("click", () => {
+      state.estado = "VERDE";
+      state.tempoNoEstado = 0;
+      state.tAbs = 0;
+      state.pedidoAceito = false;
+      state.countdownAmarelo = null;
+      render();
+    });
+
+    document.getElementById("btnInfo").addEventListener("click", () => {
+      alert(
+        "Referência CONTRAN / Manual Brasileiro de Sinalização de Trânsito (Vol. V)\n\n" +
+        "• Amarelo: 3 s a 5 s (conforme velocidade da via)\n" +
+        "• Verde e vermelho: definidos no projeto da interseção\n" +
+        "• Verde de segurança para pedestres: em geral ≥ 4 s\n" +
+        "• Travessia: velocidade de referência ~1,2 m/s\n\n" +
+        "Nesta demo (pedido no verde):\n" +
+        "• Até 3 s → amarelo\n" +
+        "• 5 s de amarelo → vermelho\n" +
+        "• 12 s de vermelho → verde"
+      );
+    });
+
+    el.ringProg.style.strokeDasharray = String(CIRC);
+    el.ringProg.style.strokeDashoffset = String(CIRC);
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

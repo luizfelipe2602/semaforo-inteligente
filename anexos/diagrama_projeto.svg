@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420">
+  <rect width="920" height="420" fill="#ffffff"/>
+  <text x="460" y="36" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#1a1a1a">Diagrama do projeto  Semáforo inteligente com solicitação de pedestres</text>
+  <text x="460" y="58" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#555">Entradas ’ Controlador (CLP / Python) ’ Saídas</text>
+
+  <!-- Entradas -->
+  <rect x="40" y="100" width="220" height="220" rx="6" fill="#f3f7fb" stroke="#1f4e79" stroke-width="1.5"/>
+  <text x="150" y="128" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#1f4e79">ENTRADAS</text>
+  <rect x="60" y="150" width="180" height="54" rx="4" fill="#ffffff" stroke="#1f4e79"/>
+  <text x="150" y="172" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#222">B_Pedestre</text>
+  <text x="150" y="190" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#555">Botoeira de pedestres</text>
+  <rect x="60" y="220" width="180" height="54" rx="4" fill="#ffffff" stroke="#5b9bd5" stroke-dasharray="4 3"/>
+  <text x="150" y="242" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#222">S_Presenca</text>
+  <text x="150" y="260" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#555">Sensor (opcional)</text>
+  <text x="150" y="300" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#666">Detecção de borda (pulso)</text>
+
+  <!-- Controlador -->
+  <rect x="340" y="100" width="240" height="220" rx="6" fill="#fff8e8" stroke="#a67c00" stroke-width="1.5"/>
+  <text x="460" y="128" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#a67c00">CONTROLADOR</text>
+  <text x="460" y="152" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#444">CLP / simulador Python</text>
+  <text x="460" y="190" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#222">estado</text>
+  <text x="460" y="210" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#222">solicitacaoPendente</text>
+  <text x="460" y="230" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#222">temporizadores</text>
+  <text x="460" y="268" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#666">VERDE ’ AMARELO ’</text>
+  <text x="460" y="286" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#666">VERMELHO ’ VERDE</text>
+
+  <!-- Saídas -->
+  <rect x="660" y="100" width="220" height="220" rx="6" fill="#f4faf4" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="770" y="128" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#2e7d32">SAÍDAS</text>
+  <circle cx="710" cy="175" r="14" fill="#c62828" stroke="#7f1d1d"/>
+  <text x="740" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#222">L_Vermelha</text>
+  <circle cx="710" cy="220" r="14" fill="#f1c40f" stroke="#9a7b0a"/>
+  <text x="740" y="225" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#222">L_Amarela</text>
+  <circle cx="710" cy="265" r="14" fill="#2e7d32" stroke="#1b5e20"/>
+  <text x="740" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#222">L_Verde</text>
+
+  <!-- Setas -->
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#333"/>
+    </marker>
+  </defs>
+  <line x1="260" y1="210" x2="340" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="580" y1="210" x2="660" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="460" y="360" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#444">Clique no verde: botão verde, amarelo em 3 s, amarelo por 5 s, vermelho por 12 s.</text>
+  <text x="460" y="382" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#777">Conceitos: sinais periódicos · temporização · sequência lógica</text>
+</svg>
