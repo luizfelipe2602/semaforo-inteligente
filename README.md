@@ -1,13 +1,15 @@
-## Demo online (permanente)
-
-- Comparar Cursor vs Argon: https://luizfelipe2602.github.io/semaforo-inteligente/
-- Só Cursor: https://luizfelipe2602.github.io/semaforo-inteligente/cursor.html
-- Só Argon: https://luizfelipe2602.github.io/semaforo-inteligente/argon.html
-
 # Semáforo inteligente com solicitação de pedestres
 
 Atividade 7 — Sistemas Digitais para Computação.  
 Implementação em **Python** (simulador), com testes, diagramas e relatório no modelo parcial N1.
+
+## Demo online (não expira)
+
+- **Cursor (lab noturno):** [abrir demo](https://luizfelipe2602.github.io/semaforo-inteligente/cursor.html)
+- **Gemini Argon (praça):** [abrir demo](https://luizfelipe2602.github.io/semaforo-inteligente/argon.html)
+
+Comparar os dois: [abrir comparação](https://luizfelipe2602.github.io/semaforo-inteligente/)
+
 
 ## Exigências atendidas
 
