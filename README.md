@@ -1,3 +1,9 @@
+## Demo online (permanente)
+
+- Comparar Cursor vs Argon: https://luizfelipe2602.github.io/semaforo-inteligente/
+- Só Cursor: https://luizfelipe2602.github.io/semaforo-inteligente/cursor.html
+- Só Argon: https://luizfelipe2602.github.io/semaforo-inteligente/argon.html
+
 # Semáforo inteligente com solicitação de pedestres
 
 Atividade 7 — Sistemas Digitais para Computação.  
